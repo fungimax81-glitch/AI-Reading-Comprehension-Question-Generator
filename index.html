@@ -408,16 +408,12 @@
           <div class="counts"><span id="cnt-words">0 words</span><span id="cnt-chars">0 characters</span></div>
         </div>
         <div class="field">
-          <label class="lbl" for="sel-grade">Target Level / Grade</label>
+          <label class="lbl" for="sel-grade">Difficulty</label>
           <select class="select" id="sel-grade">
-            <option>Kindergarten</option>
-            <option>Grades 1-2</option>
-            <option>Grades 3-4</option>
-            <option>Grades 5-6</option>
-            <option>Grades 7-8</option>
-            <option>Grades 9-10</option>
-            <option selected>Grades 11-12</option>
-            <option>Higher Education / College</option>
+            <option value="Easy">Easy</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Hard">Hard</option>
+            <option value="Hell">Hell</option>
           </select>
         </div>
       </section>
@@ -632,7 +628,7 @@ const INTENTS = [
 
 const SAMPLE = {
   title: "The Secrets of the Whispering Woods",
-  grade: "Grades 7-8",
+  grade: "Medium",
   passage: "Deep in the Pacific Northwest lies a mysterious grove known locally as the Whispering Woods. For centuries, visitors have claimed that if you stand perfectly still on a windless afternoon, you can hear a low, rhythmic humming vibrating through the ancient cedar and redwood trunks.\n\nModern botanists offer a fascinating explanation. They have discovered that these ancient giants are linked by a massive underground network of mycorrhizal fungi. This subterranean grid, nicknamed the \"Wood Wide Web,\" allows trees to share vital nutrients, signal drought stress, and even warn neighboring saplings of impending pest attacks. When a beetle begins feeding on one tree, chemical signals traverse the fungal pathways, prompting nearby trees to produce tannins that make their leaves bitter and unpalatable.\n\nThe soft rustling and humming that hikers report is likely not supernatural, but rather the acoustic manifestation of water rushing upwards through capillary tubes inside the colossal trunks under high pressure—a phenomenon amplified by the acoustic resonance of the damp forest floor. Yet, knowing the scientific truth does little to diminish the magic. Walking amongst these silent guardians feels like stepping into a living, breathing collective intelligence."
 };
 
@@ -640,7 +636,7 @@ const SAMPLE = {
 const DEFAULT_STATE = {
   title:"",
   passage:"",
-  grade:"Grades 11-12",
+  grade:"Medium",
   formats:["multiple_choice","short_answer"],
   intents: INTENTS.map(i=>({...i})),
   questions:[],
@@ -755,7 +751,8 @@ function renderWorkspace(){
     div.className="q";
     let body='<div class="qhead"><span class="qnum">Q'+num+'</span>'+
              '<span class="tag intent">'+esc(q.intent||"")+'</span>'+
-             '<span class="tag type">'+esc(typeLabel)+'</span></div>'+
+             '<span class="tag type">'+esc(typeLabel)+'</span>'+
+             '<span class="tag type">'+(q.marks||1)+' mark'+(q.marks>1?'s':'')+'</span></div>'+
              '<p class="qtext">'+esc(q.question||"")+'</p>';
 
     const user=state.answers[num]!==undefined?state.answers[num]:undefined;
@@ -891,7 +888,7 @@ function paperInnerHTML(mode){
   // header
   h+='<div class="paper-head">';
   h+='<div class="lh"><div class="nm">Student Name:</div><div class="line"></div><div class="nm">Date:</div><div class="line short"></div></div>';
-  h+='<div class="rh"><div class="pt">'+esc(title)+'</div><div class="lv">Level: '+esc(grade)+'</div></div>';
+  h+='<div class="rh"><div class="pt">'+esc(title)+'</div><div class="lv">Difficulty: '+esc(grade)+'</div></div>';
   h+='</div><div class="paper-rule"></div>';
 
   if(showQuestions){
@@ -905,7 +902,7 @@ function paperInnerHTML(mode){
   if(mode==="answers"){
     h+='<div class="paper-anskey-title">Answer Key</div>';
     state.questions.forEach((q,i)=>{
-      h+='<div class="ak"><span class="ak-q">'+(i+1)+'.</span> <span class="ak-i">'+esc(q.intent||"")+'</span> — <b>Answer: '+esc(formatAnswer(q))+'</b>'+
+      h+='<div class="ak"><span class="ak-q">'+(i+1)+'. ('+(q.marks||1)+' mark'+(q.marks>1?'s':'')+')</span> <span class="ak-i">'+esc(q.intent||"")+'</span> — <b>Answer: '+esc(formatAnswer(q))+'</b>'+
          (q.explanation?('<div class="ak-exp">'+esc(q.explanation)+'</div>'):'')+'</div>';
     });
     return h;
@@ -914,7 +911,7 @@ function paperInnerHTML(mode){
   // questions
   state.questions.forEach((q,i)=>{
     const kind=(FORMATS.find(f=>f.id===q.format)||{}).kind||"input";
-    h+='<div class="pq"><div class="qn">'+(i+1)+'. '+esc(q.question||"")+'</div>';
+    h+='<div class="pq"><div class="qn">'+(i+1)+'. '+esc(q.question||"")+' <span style="font-weight:400;color:#666">('+(q.marks||1)+' mark'+(q.marks>1?'s':'')+')</span></div>';
     if(kind==="choice"){
       const opts=(q.options||[]);
       opts.forEach((o,oi)=>{ h+='<p class="qo">'+String.fromCharCode(65+oi)+') '+esc(o)+'</p>'; });
@@ -1002,26 +999,36 @@ function buildPrompt(passage, formats, intents, grade){
   const total=intents.reduce((s,i)=>s+i.count,0);
   const formatIds=formats.join(", ");
   const intentSpec=intents.map(i=>i.name+" × "+i.count).join("; ");
-  const sys="You are an expert English reading-comprehension assessment designer. "+
-    "You create accurate, grade-appropriate questions that are strictly answerable from the provided passage. "+
+  const sys="You are a senior HKDSE English Language Paper 1 (Reading) examiner. "+
+    "Write questions that faithfully reproduce the style, wording, difficulty and question types of the Hong Kong Diploma of Secondary Education English reading paper. "+
+    "Every question must be strictly answerable from the passage, reference the relevant paragraph, and include plausible distractors where applicable. "+
     "You reply with valid JSON only, no markdown, no commentary.";
   const user=
-    'Create a reading-comprehension assessment from the passage below.\n\n'+
-    'Target level: '+grade+'\n'+
-    'Allowed question formats (use ONLY these): '+formatIds+'\n'+
+    'Create an HKDSE English Paper 1 (Reading) style assessment from the passage below.\n\n'+
+    'Difficulty: '+grade+' (Easy / Medium / Hard / Hell — adjust vocabulary, question complexity and distractor subtlety to match).\n'+
+    'Allowed question types (use ONLY these): '+formatIds+'\n'+
     'Question intents and counts: '+intentSpec+'\n'+
     'Total questions required: '+total+'\n\n'+
-    'Rules:\n'+
+    'HKDSE style rules:\n'+
+    '- Number the paragraphs of the passage (1, 2, 3...). Every question must state which paragraph it refers to, e.g. "According to paragraph 2, ..." or "Find a word in paragraph 3 which means ...".\n'+
+    '- Questions MUST follow the order of the passage: each question refers to content at the same position as, or after, the previous question\'s content. Do NOT jump back to earlier parts of the passage.\n'+
+    '- Match the tone and wording of a real DSE reading paper.\n\n'+
+    'Format-specific instructions:\n'+
+    '- multiple_choice: one stem + 4 options (A-D), exactly one best answer, three plausible distractors. Use stems such as "What is the main purpose of paragraph X?" or "Which of the following best describes ...?".\n'+
+    '- elimination: a "Which of the following is NOT ..." question with 4 options (A-D).\n'+
+    '- true_false: a statement about the passage; options are ["True","False","Not Given"], answer is one of these.\n'+
+    '- short_answer: an open question answered in a few words or one sentence, strictly using the passage.\n'+
+    '- synonyms: "Find a word or phrase in paragraph X which means \'...\'."\n'+
+    '- cloze: a single-blank gap-fill (one blank only); answer is the exact missing word/phrase.\n'+
+    '- tables: a table with a single blank; answer is the exact word/phrase.\n'+
+    '- matching: "items" (left column) + "options" (right column pool); answer maps item index to the correct option letter, e.g. {"0":"B","1":"A"}.\n'+
+    '- ordering: 4 "options" (events/points A-D) to arrange in the correct order; answer is the letter sequence, e.g. "B-D-A-C".\n\n'+
+    'Other rules:\n'+
     '- Produce exactly '+total+' questions, distributed across the intents with exactly the counts above.\n'+
-    '- Each question must use one of the allowed formats.\n'+
-    '- For "multiple_choice" and "elimination": provide 4 options (A-D) and answer as the letter.\n'+
-    '- For "true_false": options are ["True","False","Not Given"], answer is one of those.\n'+
-    '- For "matching": provide "items" (left side) and "options" (right side pool); answer is an object mapping item index to the correct option letter, e.g. {"0":"B","1":"A"}.\n'+
-    '- For short-answer style formats (short_answer, synonyms, cloze, tables, ordering): answer is a concise text string.\n'+
     '- Every answer MUST be strictly derivable from the passage.\n'+
-    '- Each question needs a one-sentence "explanation" citing the relevant evidence.\n\n'+
+    '- Each question includes a one-sentence "explanation" citing evidence, and a "marks" value (1-3, mostly 1) as in a real paper.\n\n'+
     'Respond ONLY with a JSON object of this shape:\n'+
-    '{"questions":[{"format":"...","intent":"...","question":"...","options":[...],"items":[...],"answer":"...","explanation":"..."}]}\n\n'+
+    '{"questions":[{"format":"...","intent":"...","question":"...","options":[...],"items":[...],"answer":"...","marks":1,"explanation":"..."}]}\n\n'+
     'PASSAGE:\n'+passage;
   return {sys,user};
 }
@@ -1154,7 +1161,8 @@ function normalizeQ(q){
   } else {
     answer=answer==null?"":String(answer);
   }
-  return { format, intent:q.intent||"", question:String(q.question||""), options, items, answer, explanation:q.explanation?String(q.explanation):"" };
+  let marks=parseInt(q.marks,10); if(!(marks>=1&&marks<=10)) marks=1;
+  return { format, intent:q.intent||"", question:String(q.question||""), options, items, answer, marks, explanation:q.explanation?String(q.explanation):"" };
 }
 
 function parseQuestions(txt){
