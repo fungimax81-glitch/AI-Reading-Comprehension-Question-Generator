@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reading Assessment Generator</title>
+<style>
+  :root{
+    --bg:#f3f4fb;
+    --card:#ffffff;
+    --line:#e7e8f2;
+    --line-strong:#d8dae9;
+    --ink:#1b1e2f;
+    --ink-2:#4a5068;
+    --muted:#6b7185;
+    --muted-2:#9aa0b4;
+    --accent:#5b5fe8;
+    --accent-2:#4f46e5;
+    --accent-soft:#eef0fd;
+    --accent-soft-2:#e6e8fb;
+    --grad:linear-gradient(135deg,#6a5ce8 0%,#4f46e5 100%);
+    --ok:#16a34a; --ok-soft:#e9f9ef; --ok-line:#b7e6c6;
+    --bad:#dc2626; --bad-soft:#fdeeee; --bad-line:#f3c2c2;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(27,30,47,.04),0 8px 24px rgba(27,30,47,.05);
+    --serif:Georgia,"Times New Roman","Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink);
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer}
+  input,textarea,select{font-family:inherit;color:var(--ink)}
+
+  .app{
+    display:grid;
+    grid-template-columns:460px 1fr;
+    gap:22px;
+    padding:22px 24px 40px;
+    max-width:1500px;
+    margin:0 auto;
+    align-items:start;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{display:flex;flex-direction:column;gap:18px;min-width:0}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px 18px 20px;
+  }
+  .card-head{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+  .card-head .ico{
+    width:22px;height:22px;flex:0 0 auto;
+    display:inline-flex;align-items:center;justify-content:center;
+    color:var(--accent);
+  }
+  .card-head h2{font-size:15px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .card-head .spacer{flex:1}
+  .link{
+    color:var(--accent);font-size:12.5px;font-weight:600;
+    background:none;border:none;padding:0;text-decoration:none;
+  }
+  .link:hover{text-decoration:underline}
+  .link.dim{color:var(--muted)}
+
+  .field{margin-top:14px}
+  .lbl{
+    display:block;font-size:11px;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+  }
+  .text-input,.text-area,.select{
+    width:100%;border:1px solid var(--line-strong);border-radius:10px;
+    background:#fff;font-size:13.5px;padding:10px 12px;outline:none;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .text-input:focus,.text-area:focus,.select:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,95,232,.12);
+  }
+  .text-area{resize:vertical;min-height:150px;line-height:1.6}
+  .counts{display:flex;justify-content:space-between;margin-top:7px;font-size:12px;color:var(--muted-2)}
+
+  /* formats chips */
+  .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+  .chip{
+    position:relative;border:1.5px solid var(--line-strong);border-radius:10px;
+    background:#fff;padding:10px 8px;font-size:12.5px;font-weight:600;color:var(--ink-2);
+    text-align:center;line-height:1.25;min-height:48px;display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s,background .15s,color .15s;
+  }
+  .chip:hover{border-color:#c3c6dd}
+  .chip.on{border-color:var(--accent);background:var(--accent-soft);color:#4549cc}
+
+  /* intents */
+  .desc{font-size:12.5px;color:var(--muted);margin:6px 0 2px;line-height:1.5}
+  .intent-list{display:flex;flex-direction:column;gap:10px;margin-top:12px;max-height:420px;overflow-y:auto;padding-right:4px}
+  .intent-list::-webkit-scrollbar{width:8px}
+  .intent-list::-webkit-scrollbar-thumb{background:#d6d8e8;border-radius:8px}
+  .intent{
+    border:1px solid var(--line);border-radius:12px;padding:12px 12px 12px 14px;
+    display:flex;gap:11px;align-items:flex-start;
+    transition:border-color .15s,background .15s;
+  }
+  .intent.on{border-color:var(--accent);background:#fbfbfe}
+  .intent .cb{
+    width:18px;height:18px;flex:0 0 auto;margin-top:1px;border:1.5px solid #c6c9dc;
+    border-radius:5px;background:#fff;display:inline-flex;align-items:center;justify-content:center;
+    color:#fff;cursor:pointer;transition:background .15s,border-color .15s;
+  }
+  .intent.on .cb{background:var(--accent);border-color:var(--accent)}
+  .intent .cb svg{width:12px;height:12px;display:none}
+  .intent.on .cb svg{display:block}
+  .intent .body{flex:1;min-width:0}
+  .intent .name{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .intent .name .rm{color:var(--muted-2);font-size:11px;font-weight:600;border:none;background:none;padding:0 2px}
+  .intent .name .rm:hover{color:var(--bad)}
+  .intent .d{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .stepper{
+    flex:0 0 auto;display:flex;align-items:center;gap:0;
+    border:1px solid var(--line-strong);border-radius:9px;overflow:hidden;background:#fff;
+  }
+  .stepper button{
+    width:26px;height:28px;border:none;background:#fff;color:var(--ink-2);
+    font-size:15px;font-weight:700;line-height:1;
+  }
+  .stepper button:hover{background:#f1f2f8;color:var(--accent)}
+  .stepper button:disabled{color:#c5c8d6;cursor:not-allowed;background:#fff}
+  .stepper .n{
+    min-width:24px;text-align:center;font-size:13px;font-weight:700;color:var(--ink);
+    border-left:1px solid var(--line-strong);border-right:1px solid var(--line-strong);height:28px;line-height:28px;
+  }
+  .intent.off .stepper{opacity:.4}
+
+  .custom-row{display:none;margin-top:10px;gap:8px}
+  .custom-row.show{display:flex}
+
+  .generate-bar{position:sticky;bottom:14px;z-index:20;margin-top:2px}
+  .btn-generate{
+    width:100%;border:none;border-radius:13px;padding:15px 16px;
+    background:var(--grad);color:#fff;font-size:15px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 8px 22px rgba(79,70,229,.32);
+    transition:transform .08s,box-shadow .15s,filter .15s;
+  }
+  .btn-generate:hover{filter:brightness(1.04)}
+  .btn-generate:active{transform:translateY(1px)}
+  .btn-generate:disabled{filter:grayscale(.35);opacity:.8;cursor:progress}
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- Main / toolbar ---------- */
+  .main{min-width:0}
+  .toolbar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:8px 10px;
+  }
+  .tabs{display:flex;background:#eef0f6;border-radius:10px;padding:3px;gap:2px;flex:1;min-width:0}
+  .tab{
+    border:none;background:transparent;padding:9px 14px;border-radius:8px;
+    font-size:13.5px;font-weight:600;color:#565c74;white-space:nowrap;
+  }
+  .tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(27,30,47,.12);border:1px solid #e4e6f0}
+  .tb-btn{
+    border:1px solid var(--line-strong);background:#fff;border-radius:9px;
+    padding:9px 13px;font-size:13px;font-weight:600;color:var(--ink-2);white-space:nowrap;
+  }
+  .tb-btn:hover{background:#f7f8fc}
+  .tb-btn.active{background:#eef0f6;color:var(--ink)}
+  .tb-btn.primary{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+  .tb-btn.primary:hover{background:#453dd1}
+  .tb-btn .ic{width:14px;height:14px;vertical-align:-2px;margin-right:5px}
+  .tb-btn.icon-only{padding:9px 11px}
+
+  .content{margin-top:20px}
+
+  /* empty state */
+  .empty{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:64px 28px;text-align:center;
+  }
+  .empty .ring{
+    width:74px;height:74px;margin:0 auto 18px;border-radius:50%;
+    background:var(--accent-soft);display:flex;align-items:center;justify-content:center;color:var(--accent);
+  }
+  .empty .ring svg{width:34px;height:34px}
+  .empty h3{font-size:17px;font-weight:700;margin:0 0 8px}
+  .empty p{font-size:13.5px;color:var(--muted);max-width:430px;margin:0 auto 20px;line-height:1.6}
+  .empty .demo{
+    border:1px solid var(--line-strong);background:#f7f8fc;border-radius:10px;
+    padding:10px 16px;font-size:13px;font-weight:600;color:var(--ink-2);
+  }
+  .empty .demo:hover{background:#eef0f6}
+
+  /* workspace */
+  .ws-head{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:12px 14px;margin-bottom:16px;
+  }
+  .ws-head .meta{flex:1;font-size:12.5px;color:var(--muted)}
+  .btn{
+    border:1px solid var(--line-strong);background:#fff;border-radius:9px;
+    padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-2);
+  }
+  .btn:hover{background:#f7f8fc}
+  .btn.primary{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+  .btn.primary:hover{background:#453dd1}
+  .btn.ghost{border-color:var(--line);color:var(--muted)}
+  .score{
+    display:none;border-radius:11px;padding:10px 14px;font-weight:700;font-size:13.5px;
+    background:var(--accent-soft);color:#4549cc;border:1px solid var(--accent-soft-2);
+  }
+  .score.show{display:inline-block}
+  .score .pct{opacity:.8;font-weight:600;margin-left:4px}
+
+  .qlist{display:flex;flex-direction:column;gap:14px}
+  .q{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:16px 18px;
+  }
+  .q .qhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .qnum{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:30px;height:24px;padding:0 8px;border-radius:7px;
+    background:var(--accent);color:#fff;font-size:12px;font-weight:700;
+  }
+  .tag{font-size:11px;font-weight:600;border-radius:7px;padding:3px 9px}
+  .tag.intent{background:var(--accent-soft);color:#4549cc}
+  .tag.type{background:#f1f2f8;color:var(--muted)}
+  .qtext{font-size:14.5px;font-weight:600;line-height:1.55;margin:0 0 12px}
+  .opts{display:flex;flex-direction:column;gap:8px}
+  .opt{
+    border:1.5px solid var(--line-strong);border-radius:10px;padding:10px 12px;
+    font-size:13.5px;display:flex;gap:10px;align-items:flex-start;background:#fff;
+    transition:border-color .15s,background .15s;text-align:left;width:100%;
+  }
+  .opt:hover{border-color:#c3c6dd}
+  .opt .k{
+    flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:1.5px solid #c6c9dc;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ink-2);
+  }
+  .opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .opt.sel .k{background:var(--accent);border-color:var(--accent);color:#fff}
+  .opt.correct{border-color:var(--ok-line);background:var(--ok-soft)}
+  .opt.correct .k{background:var(--ok);border-color:var(--ok);color:#fff}
+  .opt.wrong{border-color:var(--bad-line);background:var(--bad-soft)}
+  .opt.wrong .k{background:var(--bad);border-color:var(--bad);color:#fff}
+  .q .answer-input{width:100%;border:1.5px solid var(--line-strong);border-radius:10px;padding:11px 12px;font-size:13.5px}
+  .match-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .match-item .mi{flex:1;font-size:13.5px}
+  .match-item select{width:150px;border:1.5px solid var(--line-strong);border-radius:9px;padding:8px 10px;font-size:13px;background:#fff}
+  .answer-reveal{
+    display:none;margin-top:13px;border-radius:11px;padding:11px 13px;
+    background:#f6f7fb;border:1px solid var(--line);font-size:13px;line-height:1.55;
+  }
+  .answer-reveal.show{display:block}
+  .answer-reveal .res{font-weight:700;margin-bottom:3px}
+  .answer-reveal .res.ok{color:var(--ok)}
+  .answer-reveal .res.no{color:var(--bad)}
+  .answer-reveal .ans{color:var(--ink)}
+  .answer-reveal .exp{color:var(--muted);margin-top:3px}
+  .answer-reveal b{color:var(--ink)}
+  .hide-answers .answer-reveal{display:none !important}
+  .hide-answers .opt.correct,.hide-answers .opt.wrong{border-color:var(--line-strong);background:#fff}
+  .hide-answers .opt.correct .k,.hide-answers .opt.wrong .k{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* printable */
+  .print-config{
+    background:var(--accent-soft);border:1px solid var(--accent-soft-2);border-radius:14px;
+    padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px;
+  }
+  .print-config .pc-ic{color:var(--accent);flex:0 0 auto}
+  .print-config .pc-txt{flex:1;min-width:220px}
+  .print-config .pc-txt .t{font-weight:700;font-size:13.5px;color:#3d40c4;line-height:1.3}
+  .print-config .pc-txt .s{font-size:11.5px;color:#6b6fae;margin-top:2px;line-height:1.4}
+  .print-config select{border:1px solid #d5d8f0;border-radius:9px;background:#fff;padding:9px 12px;font-size:13px;min-width:176px}
+  .print-config .btn-print{
+    border:none;background:var(--accent-2);color:#fff;border-radius:9px;
+    padding:10px 16px;font-size:13px;font-weight:700;
+  }
+  .print-config .btn-print:hover{background:#453dd1}
+
+  .paper-wrap{overflow-x:auto}
+  #paper{
+    background:#fff;border:1px solid #e3e5f0;border-radius:6px;box-shadow:var(--shadow);
+    max-width:820px;margin:0 auto;padding:52px 58px;
+    font-family:var(--serif);color:#111;
+  }
+  .paper-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+  .paper-head .lh .nm{font-weight:700;font-size:15px}
+  .paper-head .lh .line{border-bottom:1px solid #333;height:26px;width:220px;margin:2px 0 10px}
+  .paper-head .lh .line.short{width:150px}
+  .paper-head .rh{text-align:right;max-width:290px}
+  .paper-head .rh .pt{font-weight:700;font-size:19px;line-height:1.25}
+  .paper-head .rh .lv{font-style:italic;font-size:13px;color:#333;margin-top:4px}
+  .paper-rule{border-top:2px solid #111;margin:16px 0 26px}
+  .paper-title{text-align:center;font-weight:700;font-size:19px;margin:0 0 18px}
+  .paper-passage p{font-size:15px;line-height:1.65;text-align:justify;margin:0 0 13px}
+  .paper-dash{border-top:1.5px dashed #b7b7b7;margin:26px 0}
+  .paper-sec-title{font-weight:700;font-size:17px;margin:0 0 6px}
+  .paper-sec-sub{font-style:italic;font-size:13px;color:#333;margin:0 0 20px}
+  .pq{margin-bottom:18px;page-break-inside:avoid}
+  .pq .qn{font-weight:700;font-size:15px;margin-bottom:5px}
+  .pq .qo{margin:0 0 4px 20px;font-size:14.5px;line-height:1.55}
+  .pq .wline{border-bottom:1px solid #555;height:24px;margin:8px 0}
+  .pq .wline.two{height:48px}
+  .pq .ansmark{font-weight:700;margin-top:6px}
+  .pq .pexp{font-style:italic;font-size:13px;color:#333;margin-top:3px}
+  .paper-anskey-title{font-weight:700;font-size:17px;text-align:center;margin:0 0 6px}
+  .ak{font-size:14.5px;margin-bottom:12px;line-height:1.55}
+  .ak .ak-q{font-weight:700}
+  .ak .ak-i{font-style:italic;color:#333}
+  .ak .ak-exp{font-style:italic;font-size:13px;color:#333;margin-top:2px}
+
+  /* settings modal */
+  .modal{position:fixed;inset:0;background:rgba(20,22,40,.42);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal.show{display:flex}
+  .modal-box{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(20,22,40,.3);width:100%;max-width:480px;padding:22px 24px}
+  .modal-box h3{margin:0 0 4px;font-size:16px}
+  .modal-box .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px}
+  .seg{display:flex;background:#eef0f6;border-radius:10px;padding:3px;margin-bottom:16px}
+  .seg button{flex:1;border:none;background:transparent;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:600;color:#565c74}
+  .seg button.active{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(27,30,47,.12)}
+  .modal-box .note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
+  .modal-box .note a{color:var(--accent)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+  #toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:#22263c;color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+    max-width:min(92vw,520px);z-index:60;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.err{background:#b91c1c}
+
+  .lock{position:fixed;inset:0;background:rgba(20,22,40,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .lock-box{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(20,22,40,.35);width:100%;max-width:360px;padding:26px 26px 22px;text-align:center}
+  .lock-box h3{margin:0 0 6px;font-size:17px}
+  .lock-box .sub{font-size:13px;color:var(--muted);margin:0 0 16px}
+  .lock-box input{width:100%;border:1.5px solid var(--line-strong);border-radius:10px;padding:11px 12px;font-size:14px;text-align:center;margin-bottom:12px;outline:none}
+  .lock-box input:focus{border-color:var(--accent)}
+  .lock-err{color:var(--bad);font-size:12.5px;min-height:18px;margin-top:8px}
+
+  /* responsive */
+  @media (max-width:1000px){
+    .app{grid-template-columns:1fr}
+    .generate-bar{position:static}
+  }
+  @media (max-width:760px){
+    .toolbar{padding:8px}
+    .tabs{flex-basis:100%;order:-1}
+    .tab{flex:1 1 0;min-width:0;text-align:center;padding:8px 6px;font-size:12.5px;overflow:hidden;text-overflow:ellipsis}
+    .tb-btn{flex:1 1 auto;padding:8px 10px;font-size:12.5px;text-align:center}
+    .print-config{gap:10px;padding:12px 14px}
+    .print-config select{flex:1 1 150px;min-width:0}
+    .print-config .btn-print{flex:1 1 100%}
+    #paper{padding:34px 26px}
+    .empty{padding:44px 16px}
+  }
+  @media (max-width:560px){
+    .app{padding:14px 12px 32px;gap:14px}
+    .chips{grid-template-columns:repeat(2,1fr)}
+    #paper{padding:30px 24px}
+    .paper-head{flex-direction:column;align-items:flex-start}
+    .paper-head .rh{text-align:left;max-width:none}
+  }
+</style>
+</head>
+<body>
+  <div class="lock" id="lock" style="display:none">
+    <div class="lock-box">
+      <h3>Access Required</h3>
+      <p class="sub">Enter the access code to open this tool.</p>
+      <input type="password" id="lock-input" placeholder="Access code" autocomplete="off" />
+      <button class="btn primary" id="lock-btn" style="width:100%">Unlock</button>
+      <div class="lock-err" id="lock-err"></div>
+    </div>
+  </div>
+  <div class="app">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
+      <!-- 1. Reading Passage -->
+      <section class="card">
+        <div class="card-head">
+          <span class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H11v6h6v10.5a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 4 19.5z"/><path d="M11 3l6 6"/><path d="M7 13h6M7 16h6"/></svg>
+          </span>
+          <h2>1. Reading Passage</h2>
+        </div>
+        <div class="field">
+          <label class="lbl">Passage Title</label>
+          <input class="text-input" id="inp-title" type="text" placeholder="Untitled Passage" />
+        </div>
+        <div class="field">
+          <label class="lbl">Body Passage Text</label>
+          <textarea class="text-area" id="inp-passage" placeholder="Paste your reading passage here..."></textarea>
+          <div class="counts"><span id="cnt-words">0 words</span><span id="cnt-chars">0 characters</span></div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="sel-grade">Target Level / Grade</label>
+          <select class="select" id="sel-grade">
+            <option>Kindergarten</option>
+            <option>Grades 1-2</option>
+            <option>Grades 3-4</option>
+            <option>Grades 5-6</option>
+            <option>Grades 7-8</option>
+            <option>Grades 9-10</option>
+            <option selected>Grades 11-12</option>
+            <option>Higher Education / College</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- 2. Formats Allowed -->
+      <section class="card">
+        <div class="card-head">
+          <span class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="10" cy="18" r="1.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <h2>2. Formats Allowed</h2>
+        </div>
+        <div class="chips" id="chips"></div>
+      </section>
+
+      <!-- 3. Question Intents -->
+      <section class="card">
+        <div class="card-head">
+          <span class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/><path d="M5 14l.7 1.7L7.5 16l-1.8.7L5 18l-.7-1.3L2.5 16l1.8-.3z"/></svg>
+          </span>
+          <h2>3. Question Intents</h2>
+          <span class="spacer"></span>
+          <button class="link" id="btn-custom">+ Custom Intent</button>
+        </div>
+        <p class="desc">Enable specific learning intents to construct target assessments. Set your desired count per intent type.</p>
+        <div class="custom-row" id="custom-row">
+          <input class="text-input" id="custom-name" type="text" placeholder="Custom intent name..." />
+          <button class="btn primary" id="btn-add-custom">Add</button>
+        </div>
+        <div class="intent-list" id="intent-list"></div>
+      </section>
+
+      <div class="generate-bar">
+        <button class="btn-generate" id="btn-generate">
+          <span id="gen-label">✦ Generate Questions with AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <main class="main">
+      <header class="toolbar">
+        <div class="tabs">
+          <button class="tab active" data-tab="workspace">Interactive Workspace (<span id="ws-count">0</span>)</button>
+          <button class="tab" data-tab="printable">Printable Views</button>
+        </div>
+        <button class="tb-btn" id="btn-hide" title="Toggle answer visibility in the editor">Hide Answers in Editor</button>
+        <button class="tb-btn primary" id="btn-export">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Export / Print
+        </button>
+        <button class="tb-btn icon-only" id="btn-settings" title="AI settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.88.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09c0 .68.4 1.3 1.03 1.56a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.88V9c.26.63.88 1.03 1.56 1.03H21a2 2 0 1 1 0 4h-.09c-.68 0-1.3.4-1.56 1.03z"/></svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <!-- Workspace tab -->
+        <div id="tab-workspace">
+          <div class="empty" id="empty-state">
+            <div class="ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H11v6h6v10.5a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 4 19.5z"/><path d="M11 3l6 6"/></svg>
+            </div>
+            <h3>No Assessment Questions Yet</h3>
+            <p>Upload your reading passage, select the assessment parameters and intents on the left, then click <b>Generate Questions with AI</b>.</p>
+            <button class="demo" id="btn-sample">Try Sample Passage</button>
+          </div>
+          <div id="ws" style="display:none">
+            <div class="ws-head">
+              <span class="meta" id="ws-meta"></span>
+              <button class="btn" id="btn-reset">Reset Answers</button>
+              <button class="btn primary" id="btn-check">Check Answers</button>
+              <span class="score" id="score"></span>
+            </div>
+            <div class="qlist" id="qlist"></div>
+          </div>
+        </div>
+
+        <!-- Printable tab -->
+        <div id="tab-printable" style="display:none">
+          <div class="print-config">
+            <span class="pc-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+            </span>
+            <div class="pc-txt">
+              <div class="t">Document Display &amp; Print Mode</div>
+              <div class="s">Choose what to show on this page. This setting also controls what gets exported or printed.</div>
+            </div>
+            <select id="sel-mode">
+              <option value="questions" selected>Show Only Questions</option>
+              <option value="answers">Show Only Answers</option>
+              <option value="both">Show Questions &amp; Answers</option>
+            </select>
+            <button class="btn-print" id="btn-print">Print Document</button>
+          </div>
+          <div class="paper-wrap"><div id="paper"></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Settings modal -->
+  <div class="modal" id="settings-modal">
+    <div class="modal-box">
+      <h3>AI Settings</h3>
+      <div class="sub">Choose which model provider generates the questions. Your key stays in this browser only.</div>
+      <div class="seg" id="seg-provider">
+        <button data-prov="gemini" class="active">Gemini (Free)</button>
+        <button data-prov="custom">Custom API</button>
+      </div>
+
+      <div id="prov-gemini">
+        <div class="field">
+          <label class="lbl">Google Gemini API Key</label>
+          <input class="text-input" id="gemini-key" type="password" placeholder="AIza..." autocomplete="off" />
+          <div class="note" id="embed-note" style="display:none">A shared key is embedded in this file — it works out of the box. Enter your own key above to override it.</div>
+          <div class="note">Free tier, available in Hong Kong. Get a key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>. Since June 2026, keys must be restricted to the Gemini API (default for keys created in AI Studio).</div>
+        </div>
+        <div class="field">
+          <label class="lbl">Model</label>
+          <select class="select" id="gemini-model">
+            <option value="gemini-3.6-flash" selected>gemini-3.6-flash (latest stable)</option>
+            <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+            <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+            <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
+            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="prov-custom" style="display:none">
+        <div class="field">
+          <label class="lbl">Base URL (OpenAI-compatible)</label>
+          <input class="text-input" id="custom-base" type="text" placeholder="https://api.openai.com/v1" />
+        </div>
+        <div class="field">
+          <label class="lbl">API Key</label>
+          <input class="text-input" id="custom-key" type="password" placeholder="sk-..." autocomplete="off" />
+        </div>
+        <div class="field">
+          <label class="lbl">Model</label>
+          <input class="text-input" id="custom-model" type="text" placeholder="gpt-4o-mini" />
+        </div>
+        <div class="note">Any OpenAI-compatible endpoint. The endpoint must allow browser (CORS) access.</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" id="btn-test">Test Connection</button>
+        <span style="flex:1"></span>
+        <button class="btn ghost" id="btn-settings-close">Cancel</button>
+        <button class="btn primary" id="btn-settings-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ==================================================================
+   EMBEDDED CONFIG — for sharing the file with third parties.
+   Paste a Gemini API key below and the app works out of the box
+   (users can still override it with their own key in Settings).
+   SECURITY: an embedded key can be extracted by anyone who has the
+   file. If you host the app on a fixed domain, restrict the key in
+   Google Cloud Console (Website restrictions > HTTP referrers).
+   ================================================================== */
+const EMBEDDED_GEMINI_KEY = "";            // e.g. "AIza..."
+const EMBEDDED_GEMINI_MODEL = "gemini-3.6-flash";
+
+/* Optional access lock for link sharing: set a passcode and only people
+   who know it can open the tool. Leave "" to disable the lock. */
+const ACCESS_PASSCODE = "quiz2026";
+
+const GEMINI_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.1-pro-preview",
+  "gemini-2.5-flash",
+  "gemini-2.5-pro"
+];
+function validGeminiModel(m){ return GEMINI_MODELS.includes(m) ? m : EMBEDDED_GEMINI_MODEL; }
+
+/* ============================ DATA ============================ */
+const FORMATS = [
+  {id:"multiple_choice", label:"Multiple Choice", kind:"choice"},
+  {id:"short_answer", label:"Short Answer", kind:"input"},
+  {id:"true_false", label:"True/False/Not Given", kind:"tf"},
+  {id:"matching", label:"Matching", kind:"matching"},
+  {id:"synonyms", label:"Synonyms / Antonyms", kind:"input"},
+  {id:"cloze", label:"Summary Cloze", kind:"input"},
+  {id:"tables", label:"Tables / Diagrams", kind:"input"},
+  {id:"ordering", label:"List Options / Ordering", kind:"input"},
+  {id:"elimination", label:"Elimination", kind:"choice"}
+];
+const INTENTS = [
+  {id:"factual_recall", name:"Factual Recall", desc:"Retrieve explicitly stated details, facts, or information directly from the text.", enabled:true, count:2},
+  {id:"inference_synthesis", name:"Inference & Synthesis", desc:"Draw logical conclusions, read between the lines, and combine information from multiple parts of the text.", enabled:true, count:2},
+  {id:"vocabulary_context", name:"Vocabulary in Context", desc:"Determine the meaning of words, phrases, or figurative language as used specifically in the passage.", enabled:true, count:2},
+  {id:"tone_mood", name:"Tone & Mood Analysis", desc:"Interpret the author's attitude (tone) and the emotional atmosphere created for the reader (mood).", enabled:false, count:2},
+  {id:"main_idea", name:"Main Idea & Theme", desc:"Identify the central message, thesis, primary focus, or overarching lesson of the text.", enabled:true, count:2},
+  {id:"structure_purpose", name:"Text Structure & Purpose", desc:"Analyze how the text is organized (chronological, compare/contrast) and the author's primary purpose.", enabled:false, count:2},
+  {id:"reference_words", name:"Reference Words", desc:"Identify what words (pronoun(s), demonstrative(s) or other referring expressions like such, former, latter, one, ones) refer to in a text.", enabled:false, count:2},
+  {id:"rhetorical", name:"Rhetorical Devices & Idioms", desc:"Locate and identify the uses of rhetorical devices and determine their meaning.", enabled:false, count:2},
+  {id:"application", name:"Application / Projection", desc:"Apply concepts to novel, hypothetical, or real-world contexts. Deduce rules, predict outcomes, or extend the author's logic.", enabled:false, count:2}
+];
+
+const SAMPLE = {
+  title: "The Secrets of the Whispering Woods",
+  grade: "Grades 7-8",
+  passage: "Deep in the Pacific Northwest lies a mysterious grove known locally as the Whispering Woods. For centuries, visitors have claimed that if you stand perfectly still on a windless afternoon, you can hear a low, rhythmic humming vibrating through the ancient cedar and redwood trunks.\n\nModern botanists offer a fascinating explanation. They have discovered that these ancient giants are linked by a massive underground network of mycorrhizal fungi. This subterranean grid, nicknamed the \"Wood Wide Web,\" allows trees to share vital nutrients, signal drought stress, and even warn neighboring saplings of impending pest attacks. When a beetle begins feeding on one tree, chemical signals traverse the fungal pathways, prompting nearby trees to produce tannins that make their leaves bitter and unpalatable.\n\nThe soft rustling and humming that hikers report is likely not supernatural, but rather the acoustic manifestation of water rushing upwards through capillary tubes inside the colossal trunks under high pressure—a phenomenon amplified by the acoustic resonance of the damp forest floor. Yet, knowing the scientific truth does little to diminish the magic. Walking amongst these silent guardians feels like stepping into a living, breathing collective intelligence."
+};
+
+/* ============================ STATE ============================ */
+const DEFAULT_STATE = {
+  title:"",
+  passage:"",
+  grade:"Grades 11-12",
+  formats:["multiple_choice","short_answer"],
+  intents: INTENTS.map(i=>({...i})),
+  questions:[],
+  answers:{},
+  graded:false,
+  hideAnswers:false,
+  settings:{ provider:"gemini", geminiKey:"", geminiModel:"gemini-3.6-flash", customBase:"", customKey:"", customModel:"gpt-4o-mini" }
+};
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem("rag_state_v1");
+    if(raw){
+      const s = JSON.parse(raw);
+      const prev = Array.isArray(s.intents)?s.intents:[];
+      const baseIds = INTENTS.map(i=>i.id);
+      // rebuild base intents (preserve user's enabled/count), keep any custom intents
+      const merged = INTENTS.map(i=>{
+        const saved = prev.find(x=>x.id===i.id);
+        return saved ? {...i, enabled:!!saved.enabled, count:saved.count|0} : {...i};
+      });
+      prev.forEach(x=>{ if(!baseIds.includes(x.id)) merged.push(x); });
+      s.intents = merged;
+      return {...DEFAULT_STATE, ...s, settings:{...DEFAULT_STATE.settings, ...(s.settings||{})}};
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+function save(){
+  try{ localStorage.setItem("rag_state_v1", JSON.stringify(state)); }catch(e){}
+}
+
+/* ============================ DOM ============================ */
+const $ = s=>document.querySelector(s);
+const $$ = s=>Array.from(document.querySelectorAll(s));
+
+/* ============================ RENDER: SIDEBAR ============================ */
+function renderChips(){
+  const el = $("#chips"); el.innerHTML="";
+  FORMATS.forEach(f=>{
+    const b=document.createElement("button");
+    b.className="chip"+(state.formats.includes(f.id)?" on":"");
+    b.textContent=f.label;
+    b.onclick=()=>{
+      const i=state.formats.indexOf(f.id);
+      if(i>=0) state.formats.splice(i,1); else state.formats.push(f.id);
+      b.classList.toggle("on", state.formats.includes(f.id));
+      save();
+    };
+    el.appendChild(b);
+  });
+}
+
+function renderIntents(){
+  const el = $("#intent-list"); el.innerHTML="";
+  state.intents.forEach((it,idx)=>{
+    const row=document.createElement("div");
+    row.className="intent"+(it.enabled?" on":" off");
+    row.innerHTML =
+      '<div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>'+
+      '<div class="body">'+
+        '<div class="name">'+esc(it.name)+(it.custom?' <button class="rm" title="Remove">✕</button>':'')+'</div>'+
+        '<div class="d">'+esc(it.desc)+'</div>'+
+      '</div>'+
+      '<div class="stepper">'+
+        '<button data-d="-1">−</button><span class="n">'+it.count+'</span><button data-d="1">+</button>'+
+      '</div>';
+    row.querySelector(".cb").onclick=()=>{ it.enabled=!it.enabled; renderIntents(); save(); };
+    row.querySelectorAll(".stepper button").forEach(btn=>{
+      btn.onclick=()=>{
+        const d=parseInt(btn.dataset.d,10);
+        it.count=Math.max(1,Math.min(20,it.count+d));
+        renderIntents(); save();
+      };
+    });
+    const rm=row.querySelector(".rm");
+    if(rm) rm.onclick=()=>{ state.intents.splice(idx,1); renderIntents(); save(); };
+    el.appendChild(row);
+  });
+}
+
+function updateCounts(){
+  const t=state.passage;
+  const words=(t.trim().match(/\S+/g)||[]).length;
+  $("#cnt-words").textContent=words+" words";
+  $("#cnt-chars").textContent=t.length+" characters";
+}
+
+/* ============================ RENDER: WORKSPACE ============================ */
+function updateWsCount(){ $("#ws-count").textContent=state.questions.length; }
+
+function renderWorkspace(){
+  updateWsCount();
+  const has=state.questions.length>0;
+  $("#empty-state").style.display=has?"none":"";
+  $("#ws").style.display=has?"":"none";
+  if(!has) return;
+
+  const n=state.questions.length;
+  const intents=new Set(state.questions.map(q=>q.intent));
+  $("#ws-meta").textContent=n+" questions · "+intents.size+" intents · "+state.grade;
+
+  const list=$("#qlist"); list.innerHTML="";
+  list.parentElement.classList.toggle("hide-answers", state.hideAnswers);
+
+  state.questions.forEach((q,i)=>{
+    const num=i+1;
+    const kind=(FORMATS.find(f=>f.id===q.format)||{}).kind||"input";
+    const typeLabel=(FORMATS.find(f=>f.id===q.format)||{}).label||q.format;
+    const div=document.createElement("div");
+    div.className="q";
+    let body='<div class="qhead"><span class="qnum">Q'+num+'</span>'+
+             '<span class="tag intent">'+esc(q.intent||"")+'</span>'+
+             '<span class="tag type">'+esc(typeLabel)+'</span></div>'+
+             '<p class="qtext">'+esc(q.question||"")+'</p>';
+
+    const user=state.answers[num]!==undefined?state.answers[num]:undefined;
+
+    if(kind==="choice" || kind==="tf"){
+      const opts = (kind==="tf") ? ["True","False","Not Given"] : (q.options||[]);
+      body+='<div class="opts">';
+      opts.forEach((o,oi)=>{
+        const letter=String.fromCharCode(65+oi);
+        let cls="opt";
+        if(state.graded && user===letter){
+          cls += (letter===q.answer) ? " correct" : " wrong";
+        } else if(user===letter){
+          cls += " sel";
+        }
+        body+='<button class="'+cls+'" data-opt="'+letter+'"><span class="k">'+letter+'</span><span>'+esc(o)+'</span></button>';
+      });
+      body+='</div>';
+    } else if(kind==="matching"){
+      const opts=(q.options||[]);
+      const items=(q.items||[]);
+      body+='<div class="match-wrap">';
+      items.forEach((it,ii)=>{
+        const letterMap = (user && typeof user==="object") ? user[ii] : "";
+        body+='<div class="match-item"><span class="mi">'+esc(it)+'</span><select data-m="'+ii+'"><option value="">-- choose --</option>'+
+          opts.map((o,oi)=>{const L=String.fromCharCode(65+oi);return '<option value="'+L+'"'+(letterMap===L?" selected":"")+'>'+L+". "+esc(o)+'</option>';}).join('')+
+          '</select></div>';
+      });
+      body+='</div>';
+    } else {
+      body+='<input class="answer-input" data-input="1" placeholder="Type your answer..." value="'+(user?esc(user):"")+'">';
+    }
+
+    body+='<div class="answer-reveal" data-reveal></div>';
+    div.innerHTML=body;
+
+    // events
+    div.querySelectorAll("[data-opt]").forEach(btn=>{
+      btn.onclick=()=>{
+        if(state.graded) return;
+        state.answers[num]=btn.dataset.opt;
+        renderWorkspace();
+      };
+    });
+    div.querySelectorAll("[data-m]").forEach(sel=>{
+      sel.onchange=()=>{
+        if(state.graded) return;
+        if(!state.answers[num] || typeof state.answers[num]!=="object") state.answers[num]={};
+        state.answers[num][sel.dataset.m]=sel.value;
+        save();
+      };
+    });
+    const inp=div.querySelector("[data-input]");
+    if(inp) inp.oninput=()=>{ state.answers[num]=inp.value; save(); };
+
+    list.appendChild(div);
+
+    // reveal
+    if(state.graded){
+      const reveal=div.querySelector("[data-reveal]");
+      const correct = gradeOne(q, num);
+      reveal.className="answer-reveal show";
+      let ansText = formatAnswer(q);
+      reveal.innerHTML = '<div class="res '+(correct?"ok":"no")+'">'+(correct?"✓ Correct":"✗ Incorrect")+'</div>'+
+        '<div class="ans"><b>Answer:</b> '+esc(ansText)+'</div>'+
+        (q.explanation?('<div class="exp">'+esc(q.explanation)+'</div>'):'');
+    }
+  });
+
+  // score
+  const sc=$("#score");
+  if(state.graded){
+    let c=0; state.questions.forEach((q,i)=>c+=gradeOne(q,i+1)?1:0);
+    const pct=Math.round(c/n*100);
+    sc.className="score show";
+    sc.innerHTML="Score: "+c+" / "+n+'<span class="pct">('+pct+"%)</span>";
+  } else {
+    sc.className="score";
+  }
+  save();
+}
+
+function gradeOne(q,num){
+  const user=state.answers[num];
+  if(user===undefined||user===null||user==="") return false;
+  const kind=(FORMATS.find(f=>f.id===q.format)||{}).kind||"input";
+  if(kind==="matching"){
+    if(typeof user!=="object"||typeof q.answer!=="object") return false;
+    const items=(q.items||[]);
+    return items.every((_,ii)=> user[ii]===q.answer[ii]);
+  }
+  if(kind==="choice"||kind==="tf"){
+    return String(user).toUpperCase()===String(q.answer).toUpperCase();
+  }
+  // input: normalized compare
+  const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9\s]/g,"").replace(/\s+/g," ").trim();
+  const a=norm(user), b=norm(q.answer);
+  if(!b) return false;
+  return a===b || (b.length>4 && a.includes(b));
+}
+
+function formatAnswer(q){
+  const kind=(FORMATS.find(f=>f.id===q.format)||{}).kind||"input";
+  if(kind==="matching" && q.answer && typeof q.answer==="object"){
+    return (q.items||[]).map((it,ii)=> String.fromCharCode(65+ii)+": "+(q.answer[ii]||"?")).join("  ");
+  }
+  if(kind==="choice" && q.options && typeof q.answer==="string" && /^[A-D]$/.test(q.answer)){
+    const oi=q.answer.charCodeAt(0)-65;
+    return q.answer + ") " + (q.options[oi]||"");
+  }
+  return q.answer;
+}
+
+/* ============================ RENDER: PRINTABLE ============================ */
+function renderPaper(){
+  const paper=$("#paper");
+  const mode=$("#sel-mode").value;
+  if(state.questions.length===0){
+    paper.innerHTML='<div style="font-style:italic;color:#666;text-align:center;padding:40px 0">Generate questions first to preview the printable document.</div>';
+    return;
+  }
+  paper.innerHTML = paperInnerHTML(mode);
+}
+
+function paperInnerHTML(mode){
+  const title=state.title.trim()||"Untitled Passage";
+  const grade=state.grade;
+  const paras=state.passage.replace(/\r/g,"").split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
+  const showQuestions = mode==="questions" || mode==="both";
+  const showAnswers  = mode==="answers" || mode==="both";
+
+  let h='';
+  // header
+  h+='<div class="paper-head">';
+  h+='<div class="lh"><div class="nm">Student Name:</div><div class="line"></div><div class="nm">Date:</div><div class="line short"></div></div>';
+  h+='<div class="rh"><div class="pt">'+esc(title)+'</div><div class="lv">Level: '+esc(grade)+'</div></div>';
+  h+='</div><div class="paper-rule"></div>';
+
+  if(showQuestions){
+    h+='<div class="paper-title">'+esc(title)+'</div>';
+    if(paras.length){ h+='<div class="paper-passage">'+paras.map(p=>'<p>'+esc(p)+'</p>').join('')+'</div>'; }
+    h+='<div class="paper-dash"></div>';
+    h+='<div class="paper-sec-title">Reading Comprehension Evaluation</div>';
+    h+='<p class="paper-sec-sub">Read each question carefully and circle or write the correct response based strictly on the passage above.</p>';
+  }
+
+  if(mode==="answers"){
+    h+='<div class="paper-anskey-title">Answer Key</div>';
+    state.questions.forEach((q,i)=>{
+      h+='<div class="ak"><span class="ak-q">'+(i+1)+'.</span> <span class="ak-i">'+esc(q.intent||"")+'</span> — <b>Answer: '+esc(formatAnswer(q))+'</b>'+
+         (q.explanation?('<div class="ak-exp">'+esc(q.explanation)+'</div>'):'')+'</div>';
+    });
+    return h;
+  }
+
+  // questions
+  state.questions.forEach((q,i)=>{
+    const kind=(FORMATS.find(f=>f.id===q.format)||{}).kind||"input";
+    h+='<div class="pq"><div class="qn">'+(i+1)+'. '+esc(q.question||"")+'</div>';
+    if(kind==="choice"){
+      const opts=(q.options||[]);
+      opts.forEach((o,oi)=>{ h+='<p class="qo">'+String.fromCharCode(65+oi)+') '+esc(o)+'</p>'; });
+    } else if(kind==="tf"){
+      h+='<p class="qo">True &nbsp;&nbsp;&nbsp; False &nbsp;&nbsp;&nbsp; Not Given</p>';
+    } else if(kind==="matching"){
+      (q.items||[]).forEach((it,ii)=>{ h+='<div class="qo">'+esc(it)+'<span style="display:inline-block;min-width:120px;border-bottom:1px solid #555;margin-left:12px">&nbsp;</span></div>'; });
+    } else {
+      h+='<div class="wline"></div><div class="wline"></div>';
+    }
+    if(showAnswers){
+      h+='<div class="ansmark">Answer: '+esc(formatAnswer(q))+'</div>';
+      if(q.explanation) h+='<div class="pexp">'+esc(q.explanation)+'</div>';
+    }
+    h+='</div>';
+  });
+  return h;
+}
+
+/* ============================ PRINT ============================ */
+function printDocument(){
+  if(state.questions.length===0){ toast("Generate questions first."); return; }
+  const mode=$("#sel-mode").value;
+  const inner=paperInnerHTML(mode);
+  const title=state.title.trim()||"Untitled Passage";
+  const doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+esc(title)+'</title>'+
+    '<style>'+
+    '@page{margin:0.6in}'+
+    'body{margin:0;padding:0;font-family:Georgia,"Times New Roman",serif;color:#111}'+
+    '.paper-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}'+
+    '.lh .nm{font-weight:700;font-size:15px}'+
+    '.lh .line{border-bottom:1px solid #333;height:26px;width:220px;margin:2px 0 10px}'+
+    '.lh .line.short{width:150px}'+
+    '.rh{text-align:right;max-width:290px}'+
+    '.rh .pt{font-weight:700;font-size:19px;line-height:1.25}'+
+    '.rh .lv{font-style:italic;font-size:13px;color:#333;margin-top:4px}'+
+    '.paper-rule{border-top:2px solid #111;margin:16px 0 26px}'+
+    '.paper-title{text-align:center;font-weight:700;font-size:19px;margin:0 0 18px}'+
+    '.paper-passage p{font-size:15px;line-height:1.65;text-align:justify;margin:0 0 13px}'+
+    '.paper-dash{border-top:1.5px dashed #b7b7b7;margin:26px 0}'+
+    '.paper-sec-title{font-weight:700;font-size:17px;margin:0 0 6px}'+
+    '.paper-sec-sub{font-style:italic;font-size:13px;color:#333;margin:0 0 20px}'+
+    '.pq{margin-bottom:18px;page-break-inside:avoid}'+
+    '.pq .qn{font-weight:700;font-size:15px;margin-bottom:5px}'+
+    '.pq .qo{margin:0 0 4px 20px;font-size:14.5px;line-height:1.55}'+
+    '.pq .wline{border-bottom:1px solid #555;height:24px;margin:8px 0}'+
+    '.pq .ansmark{font-weight:700;margin-top:6px}'+
+    '.pq .pexp{font-style:italic;font-size:13px;color:#333;margin-top:3px}'+
+    '.paper-anskey-title{font-weight:700;font-size:17px;text-align:center;margin:0 0 6px}'+
+    '.ak{font-size:14.5px;margin-bottom:12px;line-height:1.55}'+
+    '.ak .ak-q{font-weight:700}'+
+    '.ak .ak-i{font-style:italic;color:#333}'+
+    '.ak .ak-exp{font-style:italic;font-size:13px;color:#333;margin-top:2px}'+
+    '</style></head><body>'+inner+'</body></html>';
+
+  const iframe=document.createElement("iframe");
+  iframe.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(iframe);
+  const idoc=iframe.contentWindow.document;
+  idoc.open(); idoc.write(doc); idoc.close();
+  setTimeout(()=>{
+    try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){ toast("Print failed. Use the preview and press Ctrl+P."); }
+    setTimeout(()=>iframe.remove(), 60000);
+  }, 350);
+}
+
+/* ============================ AI GENERATION ============================ */
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function getProvider(){
+  const p=state.settings.provider;
+  if(p==="gemini"){
+    const key=state.settings.geminiKey||EMBEDDED_GEMINI_KEY;
+    if(!key) return null;
+    return { type:"gemini", key, model:validGeminiModel(state.settings.geminiModel) };
+  }
+  if(p==="custom"){
+    if(!state.settings.customBase || !state.settings.customKey) return null;
+    return { type:"custom", baseUrl:state.settings.customBase.replace(/\/+$/,""), key:state.settings.customKey, model:state.settings.customModel||"gpt-4o-mini" };
+  }
+  return null;
+}
+
+function buildPrompt(passage, formats, intents, grade){
+  const total=intents.reduce((s,i)=>s+i.count,0);
+  const formatIds=formats.join(", ");
+  const intentSpec=intents.map(i=>i.name+" × "+i.count).join("; ");
+  const sys="You are an expert English reading-comprehension assessment designer. "+
+    "You create accurate, grade-appropriate questions that are strictly answerable from the provided passage. "+
+    "You reply with valid JSON only, no markdown, no commentary.";
+  const user=
+    'Create a reading-comprehension assessment from the passage below.\n\n'+
+    'Target level: '+grade+'\n'+
+    'Allowed question formats (use ONLY these): '+formatIds+'\n'+
+    'Question intents and counts: '+intentSpec+'\n'+
+    'Total questions required: '+total+'\n\n'+
+    'Rules:\n'+
+    '- Produce exactly '+total+' questions, distributed across the intents with exactly the counts above.\n'+
+    '- Each question must use one of the allowed formats.\n'+
+    '- For "multiple_choice" and "elimination": provide 4 options (A-D) and answer as the letter.\n'+
+    '- For "true_false": options are ["True","False","Not Given"], answer is one of those.\n'+
+    '- For "matching": provide "items" (left side) and "options" (right side pool); answer is an object mapping item index to the correct option letter, e.g. {"0":"B","1":"A"}.\n'+
+    '- For short-answer style formats (short_answer, synonyms, cloze, tables, ordering): answer is a concise text string.\n'+
+    '- Every answer MUST be strictly derivable from the passage.\n'+
+    '- Each question needs a one-sentence "explanation" citing the relevant evidence.\n\n'+
+    'Respond ONLY with a JSON object of this shape:\n'+
+    '{"questions":[{"format":"...","intent":"...","question":"...","options":[...],"items":[...],"answer":"...","explanation":"..."}]}\n\n'+
+    'PASSAGE:\n'+passage;
+  return {sys,user};
+}
+
+async function callLLM(passage, formats, intents, grade){
+  const prov=getProvider();
+  if(!prov){ openSettings(); throw new Error("Please configure your AI provider in Settings."); }
+  const {sys,user}=buildPrompt(passage, formats, intents, grade);
+  let txt;
+  if(prov.type==="gemini") txt=await callGeminiNative(prov, sys, user);
+  else txt=await callOpenAICompat(prov, sys, user);
+  return parseQuestions(txt);
+}
+
+/* Native Gemini REST API (browser-friendly, CORS-enabled).
+   The /v1beta/openai compatibility endpoint does NOT send CORS headers,
+   so browsers must use: POST /v1beta/models/{model}:generateContent?key= */
+async function callGeminiNative(prov, sys, user){
+  const url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(prov.model)+":generateContent?key="+encodeURIComponent(prov.key);
+  const body=JSON.stringify({
+    systemInstruction:{ parts:[{ text:sys }] },
+    contents:[{ role:"user", parts:[{ text:user }] }],
+    generationConfig:{ temperature:0.7, responseMimeType:"application/json" }
+  });
+  const RETRY=[429,500,503];
+  let res=null, netErr=null;
+  for(let attempt=0; attempt<3; attempt++){
+    netErr=null; res=null;
+    try{
+      res=await fetch(url,{ method:"POST", headers:{ "Content-Type":"application/json" }, body:body });
+    }catch(e){ netErr=e; break; }
+    if(RETRY.includes(res.status) && attempt<2){
+      await new Promise(r=>setTimeout(r, 1800*(attempt+1)));
+      continue;
+    }
+    break;
+  }
+  if(netErr){
+    const err=new Error("Network request failed: "+(netErr&&netErr.message?netErr.message:"Failed to fetch"));
+    err.userMessage="Network request failed — the browser never reached Google (no response at all). Note: game-style accelerators do NOT route Google traffic; use a system-wide/global-mode (TUN) VPN covering generativelanguage.googleapis.com. Also try double-clicking this file open in Chrome (not an embedded preview), and run the ⚙ Test Connection for a precise diagnosis.";
+    throw err;
+  }
+  if(!res.ok){
+    let msg="HTTP "+res.status;
+    try{ const e=await res.json(); if(e&&e.error){ msg=e.error.message||msg; } }catch(_){}
+    const err=new Error(msg);
+    if(res.status===400&&/API key not valid|API_KEY_INVALID/i.test(msg)) err.userMessage="The Gemini API key is invalid. Check it in Settings (⚙).";
+    else if(res.status===403) err.userMessage="Request rejected (403): "+msg+" — Note: since June 2026, Gemini API keys must be restricted to the Gemini API (this is the default for keys created in AI Studio). Unrestricted keys are refused.";
+    else if(res.status===404) err.userMessage="Model not available: "+prov.model+". Pick another model in Settings (recommended: gemini-3.6-flash).";
+    else if(res.status===429||res.status===503) err.userMessage="Google reports this model is busy/overloaded (HTTP "+res.status+") — we already auto-retried 3 times. Wait about a minute and try again, or switch to a steadier model in Settings (e.g. gemini-3.5-flash / gemini-2.5-flash).";
+    else err.userMessage=msg;
+    throw err;
+  }
+  const data=await res.json();
+  if(data.promptFeedback&&data.promptFeedback.blockReason){
+    throw Object.assign(new Error("Blocked: "+data.promptFeedback.blockReason), { userMessage:"The request was blocked by safety filters ("+data.promptFeedback.blockReason+"). Try a different passage." });
+  }
+  const cand=data.candidates&&data.candidates[0];
+  const parts=cand&&cand.content&&cand.content.parts;
+  const txt=(parts||[]).filter(function(pt){ return !pt.thought; }).map(function(pt){ return pt.text||""; }).join("");
+  if(!txt) throw new Error("Empty response from model"+(cand&&cand.finishReason?" (finishReason: "+cand.finishReason+")":"")+".");
+  return txt;
+}
+
+/* Any OpenAI-compatible endpoint (custom channel) */
+async function callOpenAICompat(prov, sys, user){
+  let res;
+  try{
+    res=await fetch(prov.baseUrl+"/chat/completions",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+prov.key },
+      body:JSON.stringify({
+        model:prov.model,
+        messages:[{role:"system",content:sys},{role:"user",content:user}],
+        temperature:0.7,
+        response_format:{type:"json_object"}
+      })
+    });
+  }catch(e){
+    const err=new Error("Network request failed: "+(e&&e.message?e.message:"Failed to fetch"));
+    err.userMessage="Network request failed — the endpoint may be unreachable, or it does not allow browser (CORS) access: "+prov.baseUrl;
+    throw err;
+  }
+  if(!res.ok){
+    let msg="HTTP "+res.status;
+    try{ const e=await res.json(); msg=(e.error&&e.error.message)||msg; }catch(_){}
+    const err=new Error(msg);
+    if(res.status===401||res.status===403) err.userMessage="API key invalid or unauthorized. Check your key in Settings (⚙).";
+    else if(res.status===429) err.userMessage="Rate limit or quota reached. Try again shortly, or switch provider in Settings (⚙).";
+    else err.userMessage=msg;
+    throw err;
+  }
+  const data=await res.json();
+  const txt=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+  if(!txt) throw new Error("Empty response from model.");
+  return txt;
+}
+
+/* Clean up model output: strip letter/number prefixes the model adds
+   ("A) Tannins" -> "Tannins", "1) Cedar" -> "Cedar") and normalize answers. */
+function stripLetterPrefix(s){ return String(s).replace(/^\s*[A-Da-d]\s*\)\s*/, "").replace(/^\s*[A-Da-d]\.\s+/, ""); }
+function stripNumPrefix(s){ return String(s).replace(/^\s*\d{1,2}\s*[\)\.、]\s*/, ""); }
+function normalizeQ(q){
+  let format=FORMATS.some(f=>f.id===q.format)?q.format:"short_answer";
+  let options=Array.isArray(q.options)?q.options.map(String):undefined;
+  let items=Array.isArray(q.items)?q.items.map(String):undefined;
+  let answer=q.answer;
+  if(format==="multiple_choice"||format==="elimination"){
+    if(options) options=options.map(stripLetterPrefix);
+    const a=String(answer==null?"":answer).trim();
+    if(/^[A-Da-d]$/.test(a)) answer=a.toUpperCase();
+    else if(options&&a){
+      const i=options.findIndex(function(o){ return o.toLowerCase()===a.toLowerCase(); });
+      if(i>=0) answer=String.fromCharCode(65+i);
+    }
+  } else if(format==="true_false"){
+    if(options) options=["True","False","Not Given"];
+    const a=String(answer==null?"":answer).trim().toLowerCase();
+    if(a==="true") answer="True";
+    else if(a==="false") answer="False";
+    else if(a==="not given") answer="Not Given";
+  } else if(format==="matching"){
+    if(items) items=items.map(stripNumPrefix);
+    if(options) options=options.map(stripLetterPrefix);
+    if(answer&&typeof answer==="object"&&!Array.isArray(answer)){
+      const norm={};
+      Object.keys(answer).forEach(function(k){ norm[String(parseInt(k,10))]=String(answer[k]).trim().toUpperCase(); });
+      answer=norm;
+    }
+  } else {
+    answer=answer==null?"":String(answer);
+  }
+  return { format, intent:q.intent||"", question:String(q.question||""), options, items, answer, explanation:q.explanation?String(q.explanation):"" };
+}
+
+function parseQuestions(txt){
+  txt=txt.trim();
+  txt=txt.replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
+  let obj=null;
+  try{ obj=JSON.parse(txt); }
+  catch(e){
+    const s=txt.indexOf("{"); const e2=txt.lastIndexOf("}");
+    if(s>=0&&e2>s){ try{ obj=JSON.parse(txt.slice(s,e2+1)); }catch(_){ obj=null; } }
+  }
+  if(!obj||!Array.isArray(obj.questions)) throw new Error("Could not parse a valid question list from the model response.");
+  const qs=obj.questions.filter(q=>q&&q.question).map(normalizeQ);
+  if(!qs.length) throw new Error("No questions were returned.");
+  return qs;
+}
+
+async function generate(){
+  const passage=state.passage.trim();
+  const words=(passage.match(/\S+/g)||[]).length;
+  if(words<30){ toast("Please paste a passage of at least ~30 words first.", true); return; }
+  const formats=state.formats.slice();
+  if(!formats.length){ toast("Select at least one question format.", true); return; }
+  const intents=state.intents.filter(i=>i.enabled&&i.count>0);
+  if(!intents.length){ toast("Enable at least one question intent with a count.", true); return; }
+
+  const btn=$("#btn-generate");
+  btn.disabled=true;
+  $("#gen-label").innerHTML='<span class="spinner" style="display:inline-block;vertical-align:-3px"></span>&nbsp; Generating...';
+  try{
+    const qs=await callLLM(passage, formats, intents, state.grade);
+    state.questions=qs;
+    state.answers={};
+    state.graded=false;
+    save();
+    renderWorkspace();
+    renderPaper();
+    switchTab("workspace");
+    toast("Generated "+qs.length+" questions.");
+  }catch(e){
+    console.error(e);
+    if(e.userMessage===undefined && /provider|Settings/i.test(e.message)){ openSettings(); }
+    toast(e.userMessage||e.message||"Generation failed.", true);
+  }finally{
+    btn.disabled=false;
+    $("#gen-label").textContent="✦ Generate Questions with AI";
+  }
+}
+
+/* ============================ TABS ============================ */
+function switchTab(t){
+  $$(".tab").forEach(b=>b.classList.toggle("active", b.dataset.tab===t));
+  $("#tab-workspace").style.display = t==="workspace"?"":"none";
+  $("#tab-printable").style.display = t==="printable"?"":"none";
+  if(t==="printable") renderPaper();
+}
+
+/* ============================ TOAST ============================ */
+let toastT;
+function toast(msg, err){
+  const el=$("#toast");
+  el.textContent=msg;
+  el.className=err?"err show":"show";
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>el.className="", 4200);
+}
+
+/* ============================ SETTINGS ============================ */
+function openSettings(){
+  syncSettingsUI();
+  $("#settings-modal").classList.add("show");
+}
+function syncSettingsUI(){
+  const p=state.settings.provider;
+  $$("#seg-provider button").forEach(b=>b.classList.toggle("active", b.dataset.prov===p));
+  $("#prov-gemini").style.display = p==="gemini"?"":"none";
+  $("#prov-custom").style.display = p==="custom"?"":"none";
+  $("#gemini-key").value=state.settings.geminiKey||"";
+  $("#gemini-model").value=validGeminiModel(state.settings.geminiModel);
+  $("#embed-note").style.display = EMBEDDED_GEMINI_KEY ? "" : "none";
+  $("#custom-base").value=state.settings.customBase||"";
+  $("#custom-key").value=state.settings.customKey||"";
+  $("#custom-model").value=state.settings.customModel||"gpt-4o-mini";
+}
+
+/* One-click diagnosis: GET models list (simple request, no CORS preflight).
+   Distinguishes network-blocked vs invalid-key vs all-good. */
+async function testConnection(){
+  const btn=$("#btn-test");
+  const p=state.settings.provider;
+  btn.disabled=true; const old=btn.textContent; btn.textContent="Testing...";
+  try{
+    if(p==="gemini"){
+      const key=$("#gemini-key").value.trim()||EMBEDDED_GEMINI_KEY;
+      if(!key){ toast("Enter an API key first (or embed one in the file).", true); return; }
+      const t0=Date.now();
+      let res;
+      try{
+        res=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key="+encodeURIComponent(key));
+      }catch(e){
+        toast("✗ Network blocked: the browser cannot reach Google at all. A game-style accelerator will NOT help — you need a system-wide/global-mode (TUN) VPN covering generativelanguage.googleapis.com. Also try double-clicking this file open in Chrome instead of an embedded preview panel.", true);
+        return;
+      }
+      if(res.ok){ toast("✓ Connection OK ("+(Date.now()-t0)+" ms). Key is valid — generation should work."); }
+      else{
+        let msg="HTTP "+res.status;
+        try{ const e=await res.json(); if(e&&e.error) msg=e.error.message||msg; }catch(_){}
+        if(res.status===400&&/API key/i.test(msg)) toast("✗ Key invalid: "+msg, true);
+        else if(res.status===403) toast("✗ Rejected (403): "+msg+" — restrict the key to the Gemini API in AI Studio / Cloud Console.", true);
+        else toast("✗ "+msg, true);
+      }
+    }else{
+      const base=$("#custom-base").value.trim().replace(/\/+$/,"");
+      const key=$("#custom-key").value.trim();
+      if(!base||!key){ toast("Fill in Base URL and API Key first.", true); return; }
+      let res;
+      try{ res=await fetch(base+"/models",{ headers:{ "Authorization":"Bearer "+key } }); }
+      catch(e){ toast("✗ Network/CORS blocked: the browser cannot reach "+base+" from a web page.", true); return; }
+      if(res.ok) toast("✓ Endpoint reachable and CORS-allowed. Looks good.");
+      else toast("Endpoint reachable (HTTP "+res.status+"). CORS is allowed — if generation fails, check the model name / auth.");
+    }
+  }finally{
+    btn.disabled=false; btn.textContent=old;
+  }
+}
+
+/* ============================ EVENTS ============================ */
+function bind(){
+  function tryUnlock(){
+    if($("#lock-input").value===ACCESS_PASSCODE){
+      sessionStorage.setItem("rag_unlocked","1");
+      $("#lock").style.display="none";
+      $("#lock-err").textContent="";
+    } else {
+      $("#lock-err").textContent="Incorrect code. Try again.";
+      $("#lock-input").value="";
+    }
+  }
+  $("#lock-btn").onclick=tryUnlock;
+  $("#lock-input").addEventListener("keydown",function(e){ if(e.key==="Enter") tryUnlock(); });
+
+  $("#inp-title").oninput=e=>{ state.title=e.target.value; save(); };
+  $("#inp-passage").oninput=e=>{ state.passage=e.target.value; updateCounts(); save(); };
+  $("#sel-grade").onchange=e=>{ state.grade=e.target.value; save(); renderPaper(); };
+
+  $("#btn-generate").onclick=generate;
+
+  $$(".tab").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+  $("#btn-export").onclick=()=>{
+    if(state.questions.length===0){ toast("Generate questions first.", true); return; }
+    switchTab("printable");
+    setTimeout(printDocument, 120);
+  };
+  $("#btn-print").onclick=printDocument;
+  $("#sel-mode").onchange=renderPaper;
+
+  $("#btn-hide").onclick=()=>{
+    state.hideAnswers=!state.hideAnswers;
+    $("#btn-hide").classList.toggle("active", state.hideAnswers);
+    renderWorkspace();
+    save();
+  };
+
+  $("#btn-check").onclick=()=>{ state.graded=true; renderWorkspace(); };
+  $("#btn-reset").onclick=()=>{ state.answers={}; state.graded=false; renderWorkspace(); };
+
+  $("#btn-sample").onclick=()=>{
+    state.title=SAMPLE.title;
+    state.passage=SAMPLE.passage;
+    state.grade=SAMPLE.grade;
+    $("#inp-title").value=state.title;
+    $("#inp-passage").value=state.passage;
+    $("#sel-grade").value=state.grade;
+    updateCounts();
+    save();
+    toast("Sample passage loaded. Click Generate Questions with AI.");
+  };
+
+  $("#btn-custom").onclick=()=>{ $("#custom-row").classList.toggle("show"); };
+  $("#btn-add-custom").onclick=()=>{
+    const name=$("#custom-name").value.trim();
+    if(!name){ toast("Enter a name for the custom intent.", true); return; }
+    state.intents.push({id:"custom_"+Date.now(), name, desc:"Custom learning intent.", enabled:true, count:2, custom:true});
+    $("#custom-name").value="";
+    $("#custom-row").classList.remove("show");
+    renderIntents(); save();
+  };
+
+  $("#btn-settings").onclick=openSettings;
+  $("#btn-test").onclick=testConnection;
+  $("#btn-settings-close").onclick=()=>$("#settings-modal").classList.remove("show");
+  $("#settings-modal").onclick=e=>{ if(e.target.id==="settings-modal") $("#settings-modal").classList.remove("show"); };
+  $$("#seg-provider button").forEach(b=>b.onclick=()=>{
+    state.settings.provider=b.dataset.prov;
+    syncSettingsUI();
+  });
+  $("#btn-settings-save").onclick=()=>{
+    state.settings.geminiKey=$("#gemini-key").value.trim();
+    state.settings.geminiModel=$("#gemini-model").value;
+    state.settings.customBase=$("#custom-base").value.trim();
+    state.settings.customKey=$("#custom-key").value.trim();
+    state.settings.customModel=$("#custom-model").value.trim();
+    save();
+    $("#settings-modal").classList.remove("show");
+    toast("Settings saved.");
+  };
+}
+
+/* ============================ INIT ============================ */
+function init(){
+  state.questions=(state.questions||[]).map(normalizeQ);
+  if(ACCESS_PASSCODE && sessionStorage.getItem("rag_unlocked")!=="1"){
+    $("#lock").style.display="flex";
+    $("#lock-input").focus();
+  }
+  $("#inp-title").value=state.title;
+  $("#inp-passage").value=state.passage;
+  $("#sel-grade").value=state.grade;
+  renderChips();
+  renderIntents();
+  updateCounts();
+  updateWsCount();
+  renderWorkspace();
+  renderPaper();
+  $("#btn-hide").classList.toggle("active", state.hideAnswers);
+  bind();
+}
+init();
+})();
+</script>
+</body>
+</html>
